@@ -23,23 +23,15 @@ def update_distance():
         cur.execute(sql)
 
         rows=cur.fetchall()
-    distances=[]
-    for row in rows:
-        source = row[0]
-        dest=row[2]
-        id=row[1]
-        my_dist = gmaps.distance_matrix(str(source),str(dest))['rows'][0]['elements'][0]['distance']['value'] 
-        d={
-            'id': id,
-            'distance': my_dist,
-        }
-        distances.append(d)
-    with con:
-        cur=con.cursor()
-        for d in distances:
-            sql="UPDATE routes SET distance = '"+str(d['distance'])+"' WHERE route_id = "+str(d['id'])
+    
+        for row in rows:
+            source = row[0]
+            dest=row[2]
+            id=row[1]
+            my_dist = gmaps.distance_matrix(str(source),str(dest))['rows'][0]['elements'][0]['distance']['value'] 
+            sql="UPDATE routes SET distance = '"+str(my_dist)+"' WHERE route_id = "+str(id)
             cur.execute(sql)
-    return json.dumps(distances)
+    return "powinno smigac"
 
 
 @app.route('/transits', methods=['POST'])
