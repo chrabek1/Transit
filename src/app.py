@@ -6,20 +6,49 @@ app = Flask(__name__)
 
 con = pymysql.connect('192.168.1.87', 'root','pass','transit')
 
-gmaps = googlemaps.Client(key='AIzaSyDLpDu6ap9FvcBvshtA2I9vF61T1L8ap-0')
-api_key='AIzaSyDLpDu6ap9FvcBvshtA2I9vF61T1L8ap-0'
+
 
 @app.route('/')
 def hello_world():
     return 'kierowca ciężarówki'
 
-@app.route('/transits',methods=['POST'])
+@app.route('/distance_update', methods=['PUT'])
+def update_distance():
+    f = open("api_key.txt", "r")
+    api_key=f.readline()
+    gmaps = googlemaps.Client(key=api_key)
+    sql="SELECT * FROM routes WHERE distance IS NULL"
+    with con:
+        cur = con.cursor()
+        cur.execute(sql)
+
+        rows=cur.fetchall()
+    distances=[]
+    for row in rows:
+        source = row[0]
+        dest=row[2]
+        id=row[1]
+        my_dist = gmaps.distance_matrix(str(source),str(dest))['rows'][0]['elements'][0]['distance']['value'] 
+        d={
+            'id': id,
+            'distance': my_dist,
+        }
+        distances.append(d)
+    with con:
+        cur=con.cursor()
+        for d in distances:
+            sql="UPDATE routes SET distance = '"+str(d['distance'])+"' WHERE route_id = "+str(d['id'])
+            cur.execute(sql)
+    return json.dumps(distances)
+
+
+@app.route('/transits', methods=['POST'])
 def transits():
     data = request.json
-    source = data['source_address']
-    dest = data['destination_address']
-    my_dist = gmaps.distance_matrix(str(source),str(dest))['rows'][0]['elements'][0] 
-    data['distance']=my_dist['distance']['value']
+    #source = data['source_address']
+    #dest = data['destination_address']
+    #my_dist = gmaps.distance_matrix(str(source),str(dest))['rows'][0]['elements'][0] 
+    #data['distance']=my_dist['distance']['value']
 
     sql="INSERT INTO `routes` "
     a=['`'+field+'`' for field in data]
@@ -28,7 +57,7 @@ def transits():
 
     with con:
         cur = con.cursor()
-        cur.execute(str(sql))
+        cur.execute(sql)
     
     return "chyba sie udalo"
 
