@@ -10,7 +10,7 @@ con = pymysql.connect('192.168.1.87', 'root','pass','transit')
 
 @app.route('/')
 def hello_world():
-    return 'kierowca ciężarówki'
+    return 'kierowca ciężaarówki'
 
 @app.route('/distance_update', methods=['PUT'])
 def update_distance():
